@@ -1,4 +1,4 @@
-module github.com/mattn/mpp
+module github.com/mattn/mpcc
 
 go 1.16
 

@@ -8,6 +8,8 @@ import (
 	"io"
 	"log"
 	"net/http"
+	"os"
+	"strconv"
 	"strings"
 
 	"github.com/fhs/gompd/mpd"
@@ -96,10 +98,17 @@ func play(uri string, ch chan map[string]string) error {
 	}
 }
 
+func defaultValue(key, def string) string {
+	if v := os.Getenv(key); v != "" {
+		return v
+	}
+	return def
+}
+
 func main() {
 	var addr, stream string
-	flag.StringVar(&stream, "stream", "", "Stream URL")
-	flag.StringVar(&addr, "addr", "127.0.0.1:6600", "Server address")
+	flag.StringVar(&stream, "stream", defaultValue("MPCC_STREAM", ""), "Stream URL")
+	flag.StringVar(&addr, "addr", defaultValue("MPCC_ADDR", "127.0.0.1:6600"), "Server address")
 	flag.Parse()
 
 	if stream != "" {
@@ -145,6 +154,20 @@ func main() {
 			client.Next()
 		case 'k':
 			client.Previous()
+		case '+':
+			attr, _ := client.Status()
+			if attr != nil {
+				if n, err := strconv.Atoi(attr["volume"]); err == nil {
+					client.SetVolume(n + 1)
+				}
+			}
+		case '-':
+			attr, _ := client.Status()
+			if attr != nil {
+				if n, err := strconv.Atoi(attr["volume"]); err == nil {
+					client.SetVolume(n - 1)
+				}
+			}
 		case ' ':
 			attr, _ := client.Status()
 			if attr != nil && attr["state"] == "play" {

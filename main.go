@@ -2,6 +2,7 @@ package main
 
 import (
 	"bufio"
+	"encoding/json"
 	"errors"
 	"flag"
 	"fmt"
@@ -107,8 +108,10 @@ func defaultValue(key, def string) string {
 
 func main() {
 	var addr, stream string
+	var jsonOut bool
 	flag.StringVar(&stream, "stream", defaultValue("MPCC_STREAM", ""), "Stream URL")
 	flag.StringVar(&addr, "addr", defaultValue("MPCC_ADDR", "127.0.0.1:6600"), "Server address")
+	flag.BoolVar(&jsonOut, "json", false, "Output JSON")
 	flag.Parse()
 
 	if stream != "" {
@@ -127,7 +130,11 @@ func main() {
 
 		go func() {
 			for ii := range ch {
-				fmt.Printf("%s : %s\n", ii["ARTIST"], ii["TITLE"])
+				if jsonOut {
+					json.NewEncoder(os.Stdout).Encode(ii)
+				} else {
+					fmt.Printf("%s : %s\n", ii["ARTIST"], ii["TITLE"])
+				}
 			}
 		}()
 	}
@@ -154,23 +161,36 @@ func main() {
 			client.Next()
 		case 'k':
 			client.Previous()
+		case 'p':
+			attr, _ := client.Status()
+			if attr == nil {
+				continue
+			}
+			if n, err := strconv.Atoi(attr["song"]); err == nil {
+				client.Play(n)
+			}
 		case '+':
 			attr, _ := client.Status()
-			if attr != nil {
-				if n, err := strconv.Atoi(attr["volume"]); err == nil {
-					client.SetVolume(n + 1)
-				}
+			if attr == nil {
+				continue
+			}
+			if n, err := strconv.Atoi(attr["volume"]); err == nil {
+				client.SetVolume(n + 1)
 			}
 		case '-':
 			attr, _ := client.Status()
-			if attr != nil {
-				if n, err := strconv.Atoi(attr["volume"]); err == nil {
-					client.SetVolume(n - 1)
-				}
+			if attr == nil {
+				continue
+			}
+			if n, err := strconv.Atoi(attr["volume"]); err == nil {
+				client.SetVolume(n - 1)
 			}
 		case ' ':
 			attr, _ := client.Status()
-			if attr != nil && attr["state"] == "play" {
+			if attr == nil {
+				continue
+			}
+			if attr["state"] == "play" {
 				client.Pause(true)
 			} else {
 				client.Pause(false)

@@ -192,7 +192,7 @@ func main() {
 			}
 			if attr["state"] == "play" {
 				client.Pause(true)
-			} else {
+			} else if attr["state"] == "pause" {
 				client.Pause(false)
 			}
 		}

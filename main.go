@@ -26,23 +26,8 @@ func play(uri string, ch chan map[string]string) error {
 	}
 	defer resp.Body.Close()
 
-	pr, pw := io.Pipe()
-	go func() {
-		defer pw.Close()
-		var buf [8192]byte
-		for {
-			n, err := resp.Body.Read(buf[:])
-			if err != nil {
-				break
-			}
-			_, err = pw.Write(buf[:n])
-			if err != nil {
-				break
-			}
-		}
-	}()
-
-	st, err := oggvorbis.NewReader(bufio.NewReaderSize(pr, 8192))
+	br := bufio.NewReader(resp.Body)
+	st, err := oggvorbis.NewReader(br)
 	if err != nil {
 		return err
 	}

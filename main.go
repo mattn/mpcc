@@ -42,7 +42,7 @@ func play(uri string, ch chan map[string]string) error {
 		}
 	}()
 
-	st, err := oggvorbis.NewReader(bufio.NewReader(pr))
+	st, err := oggvorbis.NewReader(bufio.NewReaderSize(pr, 8192))
 	if err != nil {
 		return err
 	}
@@ -80,6 +80,9 @@ func play(uri string, ch chan map[string]string) error {
 		n, err := st.Read(samples)
 		if err != nil {
 			return io.EOF
+		}
+		if n == 0 {
+			continue
 		}
 
 		for i, val := range samples[:n] {

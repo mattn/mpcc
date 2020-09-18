@@ -26,7 +26,7 @@ func play(uri string, ch chan map[string]string) error {
 	}
 	defer resp.Body.Close()
 
-	br := bufio.NewReader(resp.Body)
+	br := bufio.NewReaderSize(resp.Body, 8192)
 	st, err := oggvorbis.NewReader(br)
 	if err != nil {
 		return err
